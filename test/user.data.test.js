@@ -1,91 +1,66 @@
-import './testDb.js'
+import "./testDb.js";
 
-import { createUser, findUserById, findUserByUsername } from '../user/userData.js'
+import {
+  createUser,
+  findUserById,
+  findUserByUsername,
+} from "../user/userData.js";
 
-describe('user data layer', () => {
+describe("user data layer", () => {
+  it("should create a user with a username", async () => {
+    const user = await createUser("tonye", "Tony Enerson", "InceptionU");
+    expect(user).toBeDefined();
+    expect(user.username).toEqual("tonye");
+    expect(user.fullName).toEqual("Tony Enerson");
+    expect(user.companyName).toEqual("InceptionU");
+  });
 
-    it('should create a user with a username', async () => {
-        //execute
-        const user = await createUser('tonye', 'Tony Enerson', 'InceptionU')
+  it("should find a user by username", async () => {
+    await createUser("tonye", "Tony Enerson", "InceptionU");
+    const user = await findUserByUsername("tonye");
+    expect(user.username).toEqual("tonye");
+    expect(user.fullName).toEqual("Tony Enerson");
+    expect(user.companyName).toEqual("InceptionU");
+  });
 
-        // test
-        expect(user).toBeDefined()
-        expect(user.username).toEqual('tonye')
-        expect(user.fullName).toEqual('Tony Enerson')
-        expect(user.companyName).toEqual('InceptionU')
-    })
+  it("should find a user by id", async () => {
+    const createdUser = await createUser("tonye", "Tony Enerson", "InceptionU");
+    const user = await findUserById(createdUser._id);
+    expect(user.username).toEqual("tonye");
+    expect(user.fullName).toEqual("Tony Enerson");
+    expect(user.companyName).toEqual("InceptionU");
+  });
 
-    it.skip('should find a user by username', async () => {
-        // setup
-        await createUser('tonye', 'Tony Enerson', 'InceptionU')
+  it("should require a username that is not an empty string", async () => {
+    await expect(
+      createUser(null, "Tony Enerson", "InceptionU")
+    ).rejects.toThrow(
+      "user validation failed: username: Path `username` is required."
+    );
+  });
 
-        // execute
-        const user = findUserByUsername('tonye')
+  it("should require a full name", async () => {
+    //execute
+    try {
+      await createUser("tonye", "", "InceptionU");
+      fail("should have failed to create a duplicate username");
+    } catch (err) {
+      // happy case!
+    }
+  });
 
-        // test
-        expect(user.username).toEqual('tonye')
-        expect(user.fullName).toEqual('Tony Enerson')
-        expect(user.companyName).toEqual('InceptionU')
-    })
+  it("should not require a company name", async () => {
+    const user = await createUser("tonye", "Tony Enerson", null);
+    expect(user.companyName).toEqual(null);
+  });
 
-    it.skip('should find a user by id', async () => {
-        // setup
-        const createdUser = await createUser('tonye', 'Tony Enerson', 'InceptionU')
-
-        // execute
-        const user = findUserById(createdUser._id)
-
-        // test
-        expect(user.username).toEqual('tonye')
-        expect(user.fullName).toEqual('Tony Enerson')
-        expect(user.companyName).toEqual('InceptionU')
-    })
-
-    it.skip('should require a username', async () => {
-        //execute
-        try {
-            await createUser('', 'Tony Enerson', 'InceptionU')
-            fail('should have failed to create a duplicate username')
-        }
-        catch (err) {
-            // happy case!
-        }
-    })
-
-    it.skip('should require a full name', async () => {
-        //execute
-        try {
-            await createUser('tonye', '', 'InceptionU')
-            fail('should have failed to create a duplicate username')
-        }
-        catch (err) {
-            // happy case!
-        }
-    })
-
-    it.skip('should not require a company name', async () => {
-        // setup
-        const createdUser = await createUser('tonye', 'Tony Enerson')
-
-        // execute
-        const user = findUserById(createdUser._id)
-
-        // test
-        expect(user.companyName).toEqual('')  // default value
-    })
-
-    it.skip('should not create a user with a duplicate username', async () => {
-        //setup
-        await createUser('tonye', 'Tony Enerson', 'InceptionU')
-
-        //execute
-        try {
-            await createUser('tonye', 'Tony Eggbert', 'Cupcakes4Fun')
-            fail('should have failed to create a duplicate username')
-        }
-        catch (err) {
-            // happy case!
-        }
-    })
-
-})
+  it("should not create a user with a duplicate username", async () => {
+    await createUser("tonye", "Tony Enerson", "InceptionU");
+    try {
+      await createUser("tonye", "Tony Eggbert", "Cupcakes4Fun");
+      fail("Taken. Like Liam Neeson's daughter.");
+    } catch (err) {
+      // happy case!
+    }
+  });
+});
